@@ -1,0 +1,607 @@
+{% extends 'recruitment/base.html' %}
+{% block title %}{{ candidate.full_name }} - HireIQ{% endblock %}
+
+{% block extra_css %}
+<style>
+.action-btn {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+    margin-bottom: 8px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+.action-btn:hover { transform: translateY(-1px); }
+.score-ring {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    border: 8px solid;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+    <!-- ── LEFT COLUMN ────────────────────────────── -->
+    <div class="col-lg-8">
+
+        <!-- Candidate Header -->
+        <div class="card-custom p-4 mb-4">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <div style="width:65px;height:65px;
+                            background:linear-gradient(135deg,#4361ee,#4cc9f0);
+                            border-radius:50%;display:flex;
+                            align-items:center;justify-content:center;
+                            color:white;font-size:1.6rem;
+                            font-weight:700;flex-shrink:0;">
+                    {{ candidate.full_name|first|upper }}
+                </div>
+                <div>
+                    <h4 class="fw-bold mb-0">
+                        {{ candidate.full_name }}
+                    </h4>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-envelope me-1"></i>
+                        {{ candidate.email }}
+                        {% if candidate.phone %}
+                        <span class="ms-3">
+                            <i class="fas fa-phone me-1"></i>
+                            {{ candidate.phone }}
+                        </span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <small class="text-muted d-block mb-1">
+                        <i class="fas fa-briefcase me-1"></i>
+                        Applied For
+                    </small>
+                    <span class="fw-semibold">
+                        {{ candidate.job.title }}
+                    </span>
+                </div>
+                <div class="col-md-6">
+                    <small class="text-muted d-block mb-1">
+                        <i class="fas fa-calendar me-1"></i>
+                        Uploaded On
+                    </small>
+                    <span class="fw-semibold">
+                        {{ candidate.uploaded_at|date:"M d, Y H:i" }}
+                    </span>
+                </div>
+                {% if candidate.linkedin_url %}
+                <div class="col-12">
+                    <small class="text-muted d-block mb-1">
+                        <i class="fab fa-linkedin me-1"></i>
+                        LinkedIn
+                    </small>
+                    <a href="{{ candidate.linkedin_url }}"
+                       target="_blank" class="text-primary">
+                        {{ candidate.linkedin_url }}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Extracted Skills -->
+        <div class="card-custom p-4 mb-4">
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-tools me-2 text-primary"></i>
+                Extracted Skills
+            </h5>
+            {% for skill in skills_list %}
+                {% if skill in job_skills %}
+                    <span class="badge bg-success me-1 mb-2 px-3 py-2">
+<i class="fas fa-check me-1"></i>{{ skill }}
+                    </span>
+                {% else %}
+                    <span class="badge-skill">{{ skill }}</span>
+                {% endif %}
+            {% empty %}
+                <p class="text-muted">No skills extracted</p>
+            {% endfor %}
+            <div class="mt-2">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Green = matched with job requirements
+                </small>
+            </div>
+        </div>
+
+        <!-- Missing Skills -->
+        {% if missing_skills %}
+        <div class="card-custom p-4 mb-4">
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                Missing Skills
+            </h5>
+            <p class="text-muted small mb-3">
+                Required but not found in resume:
+            </p>
+            {% for skill in missing_skills %}
+                <span class="badge bg-danger me-1 mb-2 px-3 py-2">
+                    <i class="fas fa-times me-1"></i>{{ skill }}
+                </span>
+            {% endfor %}
+            <div class="alert alert-warning mt-3 mb-0 py-2">
+                <small>
+                    <i class="fas fa-lightbulb me-1"></i>
+                    Candidate should upskill in these areas.
+                </small>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Experience -->
+        <div class="card-custom p-4 mb-4">
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-history me-2 text-primary"></i>
+                Experience
+            </h5>
+            <p class="text-muted mb-0">
+                {{ candidate.extracted_experience|default:"Not found in resume" }}
+            </p>
+        </div>
+
+        <!-- Education -->
+        <div class="card-custom p-4 mb-4">
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-graduation-cap me-2 text-primary"></i>
+                Education
+            </h5>
+            <p class="text-muted mb-0">
+                {{ candidate.extracted_education|default:"Not found in resume" }}
+            </p>
+        </div>
+
+        <!-- Resume Preview -->
+        <div class="card-custom p-4">
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-file-alt me-2 text-primary"></i>
+                Resume Text Preview
+            </h5>
+            <div class="bg-light rounded p-3"
+                 style="font-size:0.82rem;max-height:180px;
+                        overflow-y:auto;line-height:1.7;">
+                {{ candidate.raw_text|truncatewords:80|default:"No text extracted" }}
+            </div>
+        </div>
+    </div>
+
+    <!-- ── RIGHT COLUMN ───────────────────────────── -->
+    <div class="col-lg-4">
+        <div style="position:sticky;top:20px;">
+
+            <!-- Match Score Card -->
+            <div class="card-custom p-4 mb-4 text-center">
+                <h5 class="fw-bold mb-3">
+                    <i class="fas fa-chart-pie me-2 text-primary"></i>
+                    Match Score
+                </h5>
+                {% if score %}
+                <div class="score-ring"
+                     style="border-color:
+                     {% if score.overall_score >= 70 %}#2ecc71
+                     {% elif score.overall_score >= 50 %}#f39c12
+                     {% else %}#e74c3c{% endif %};">
+                    <div style="font-size:2rem;font-weight:800;
+                        {% if score.overall_score >= 70 %}color:#2ecc71;
+                        {% elif score.overall_score >= 50 %}color:#f39c12;
+                        {% else %}color:#e74c3c;{% endif %}">
+                        {{ score.overall_score }}%
+                    </div>
+                    <small class="text-muted"
+                           style="font-size:0.65rem;">
+                        Overall
+                    </small>
+                </div>
+<div class="text-start mt-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="fw-semibold">Skills Match</small>
+                        <small class="fw-bold">
+                            {{ score.skills_score }}%
+                        </small>
+                    </div>
+                    <div class="progress mb-3" style="height:8px;">
+                        <div class="progress-bar bg-primary"
+                             style="width:{{ score.skills_score }}%">
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="fw-semibold">
+                            Experience Match
+                        </small>
+                        <small class="fw-bold">
+                            {{ score.experience_score }}%
+                        </small>
+                    </div>
+                    <div class="progress mb-3" style="height:8px;">
+                        <div class="progress-bar bg-info"
+                             style="width:{{ score.experience_score }}%">
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="fw-semibold">
+                            Education Match
+                        </small>
+                        <small class="fw-bold">
+                            {{ score.education_score }}%
+                        </small>
+                    </div>
+                    <div class="progress mb-3" style="height:8px;">
+                        <div class="progress-bar bg-warning"
+                             style="width:{{ score.education_score }}%">
+                        </div>
+                    </div>
+                </div>
+
+                {% if score.is_shortlisted %}
+                <div class="alert alert-success py-2 mb-0">
+                    <i class="fas fa-check-circle me-1"></i>
+                    <strong>Shortlisted</strong>
+                    {% if score.shortlisted_at %}
+                    <br>
+                    <small>
+                        {{ score.shortlisted_at|date:"M d, Y" }}
+                    </small>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="alert alert-secondary py-2 mb-0">
+                    <i class="fas fa-clock me-1"></i>
+                    Status: <strong>Pending Review</strong>
+                </div>
+                {% endif %}
+
+                {% else %}
+                <div class="alert alert-warning mb-3">
+                    Score not calculated yet
+                </div>
+                <a href="{% url 'recalculate_score' candidate.id %}"
+                   class="btn btn-warning w-100">
+                    <i class="fas fa-sync me-2"></i>
+                    Calculate Score Now
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Actions Card -->
+                <div class="card-custom p-4 mb-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="fas fa-bolt me-2 text-warning"></i>
+                        Actions
+                    </h5>
+
+                    {% if is_blacklisted %}
+                    <!-- BLOCKED STATE -->
+                    <div class="alert alert-danger mb-3 text-center">
+                        <i class="fas fa-ban fa-2x mb-2 d-block"></i>
+                        <strong>Candidate Blocked</strong><br>
+                        <small>
+                            Reason: {{ is_blacklisted.get_reason_display }}<br>
+                            Blocked on: {{ is_blacklisted.blacklisted_at|date:"M d, Y" }}
+                        </small>
+                    </div>
+
+                    {% if is_blacklisted.notes %}
+                    <div class="alert alert-secondary py-2 mb-3">
+                        <small>
+                            <strong>Internal Notes:</strong>
+                            {{ is_blacklisted.notes }}
+                        </small>
+                    </div>
+                    {% endif %}
+
+                    <p class="text-muted small text-center mb-3">
+                        This candidate cannot reapply for this position.
+                        All action buttons are disabled.
+                    </p>
+
+                    <!-- Only allow view and delete when blacklisted -->
+                    {% if candidate.resume_file %}
+                    <a href="{{ candidate.resume_file.url }}"
+                       target="_blank"
+                       class="action-btn btn btn-outline-secondary">
+                        <i class="fas fa-download me-2"></i>
+                        Download Resume
+                    </a>
+                    {% endif %}
+
+                    <a href="{% url 'job_detail' candidate.job.id %}"
+                       class="action-btn btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Back to Job
+                    </a>
+
+                    <a href="{% url 'delete_candidate' candidate.id %}"
+                       class="action-btn btn btn-outline-danger">
+                        <i class="fas fa-trash me-2"></i>
+                        Delete Candidate Record
+                    </a>
+
+                    {% else %}
+                    <!-- NORMAL STATE — all actions available -->
+
+                    <!-- Shortlist / Remove -->
+                    {% if score %}
+                    <form method="POST" class="mb-1">
+                        {% csrf_token %}
+                        {% if score.is_shortlisted %}
+                            <button type="submit"
+                                    name="action" value="reject"
+                                    class="action-btn btn btn-outline-danger">
+                                <i class="fas fa-times me-2"></i>
+                                Remove from Shortlist
+                            </button>
+                        {% else %}
+                            <button type="submit"
+                                    name="action" value="shortlist"
+                                    class="action-btn btn btn-success">
+                                <i class="fas fa-check me-2"></i>
+                                Shortlist Candidate
+                            </button>
+                        {% endif %}
+                    </form>
+                    {% endif %}
+
+                    <!-- Schedule Interview -->
+                    {% if score and score.is_shortlisted %}
+                    <a href="{% url 'schedule_interview' candidate.id %}"
+                       class="action-btn btn btn-primary">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        {% if candidate.interview %}
+                            Reschedule Interview
+                        {% else %}
+                            Schedule Interview
+                        {% endif %}
+                    </a>
+                    {% endif %}
+
+                    <!-- Mark Interview Complete -->
+                    {% if candidate.interview %}
+                        {% if candidate.interview.status == 'scheduled' or candidate.interview.status == 'rescheduled' %}
+                        <form method="POST"
+                              action="{% url 'mark_interview_complete' candidate.id %}"
+                              class="mb-1">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="action-btn btn btn-info"
+                                    onclick="return confirm('Mark interview as completed?')">
+                                <i class="fas fa-check-double me-2"></i>
+                                Mark Interview Complete
+                            </button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+
+                    <!-- Send Offer Letter -->
+                    {% if candidate.interview and candidate.interview.status == 'completed' %}
+                    <a href="{% url 'send_offer_letter' candidate.id %}"
+                       class="action-btn btn btn-success">
+                        <i class="fas fa-file-contract me-2"></i>
+                        Send Offer Letter
+                    </a>
+                    {% endif %}
+
+                    <!-- Offer Status -->
+                {% if candidate.offer_letter %}
+                    <div class="alert alert-success py-2 mb-1 text-center">
+                        <i class="fas fa-handshake me-1"></i>
+                        Offer — {{ candidate.offer_letter.get_status_display }}
+                        <br>
+                        <small>
+                            {{ candidate.offer_letter.designation }} |
+                            {{ candidate.offer_letter.salary_package }}
+                        </small>
+                    </div>
+                    <a href="{% url 'download_offer_letter' candidate.id %}"
+                       class="action-btn btn btn-outline-primary">
+                        <i class="fas fa-file-pdf me-2"></i>
+                        Download Offer Letter
+                    </a>
+                    {% endif %}
+
+                    <!-- Generate Interview Questions -->
+                    {% if score and score.is_shortlisted %}
+                    <a href="{% url 'generate_interview_questions' candidate.id %}"
+                       class="action-btn btn btn-outline-info">
+                        <i class="fas fa-question-circle me-2"></i>
+                        Generate Interview Questions
+                    </a>
+                    {% endif %}
+
+                    <!-- LinkedIn -->
+                    {% if candidate.linkedin_url %}
+                    <a href="{{ candidate.linkedin_url }}"
+                       target="_blank"
+                       class="action-btn btn btn-outline-primary">
+                        <i class="fab fa-linkedin me-2"></i>
+                        View LinkedIn Profile
+                    </a>
+                    {% else %}
+                    <button class="action-btn btn btn-outline-secondary"
+                            disabled>
+                        <i class="fab fa-linkedin me-2"></i>
+                        No LinkedIn Added
+                    </button>
+                    {% endif %}
+
+                    <!-- WhatsApp -->
+                    {% if score and score.is_shortlisted %}
+                        {% if candidate.candidate_profile and candidate.candidate_profile.whatsapp_consent %}
+                        <a href="{{ whatsapp_url }}" target="_blank"
+                           class="action-btn"
+                           style="background:#25D366;color:white;
+                                  border:none;display:block;"
+                           onclick="return confirm('Send WhatsApp to {{ candidate.full_name }}?')">
+                            <i class="fab fa-whatsapp me-2"></i>
+                            Send WhatsApp Message
+                        </a>
+                        {% else %}
+                        <button class="action-btn btn btn-outline-secondary"
+                                disabled title="No WhatsApp consent">
+                            <i class="fab fa-whatsapp me-2"></i>
+                            WhatsApp — No Consent
+                        </button>
+                        {% endif %}
+                    {% endif %}
+
+                    <!-- Download Resume -->
+                    {% if candidate.resume_file %}
+                    <a href="{{ candidate.resume_file.url }}"
+                       target="_blank"
+                       class="action-btn btn btn-outline-primary">
+                        <i class="fas fa-download me-2"></i>
+                        Download Resume
+                    </a>
+                    {% endif %}
+
+                    <!-- Export PDF -->
+                    <a href="{% url 'export_candidate_pdf' candidate.id %}"
+                       class="action-btn btn btn-danger">
+                        <i class="fas fa-file-pdf me-2"></i>
+                        Export PDF Report
+                    </a>
+
+                    <!-- Recalculate Score -->
+                    <a href="{% url 'recalculate_score' candidate.id %}"
+                       class="action-btn btn btn-outline-warning">
+                        <i class="fas fa-sync me-2"></i>
+                        Recalculate Score
+                    </a>
+
+                    <!-- Reject & Blacklist -->
+                    {% if score and not score.is_shortlisted %}
+                    <a href="{% url 'reject_and_blacklist' candidate.id %}"
+                       class="action-btn btn btn-outline-danger">
+                        <i class="fas fa-user-times me-2"></i>
+                        Reject & Block Candidate
+                    </a>
+                    {% endif %}
+
+                    <!-- Back to Job -->
+                    <a href="{% url 'job_detail' candidate.job.id %}"
+                       class="action-btn btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Back to Job
+                    </a>
+
+                    <!-- Delete -->
+                    <a href="{% url 'delete_candidate' candidate.id %}"
+                       class="action-btn btn btn-outline-danger">
+                        <i class="fas fa-trash me-2"></i>
+                        Delete Candidate
+                    </a>
+
+                    {% endif %}
+                    <!-- END blacklist check -->
+                </div>
+
+            <!-- Interview Info -->
+            {% if candidate.interview %}
+            <div class="card-custom p-4 mb-4">
+                <h6 class="fw-bold mb-3">
+                    <i class="fas fa-calendar-check me-2 text-success"></i>
+                    Interview Details
+                </h6>
+                <div class="mb-2">
+                    <small class="text-muted">Date</small>
+                    <div class="fw-semibold">
+                        {{ candidate.interview.interview_date|date:"M d, Y" }}
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">Time</small>
+                    <div class="fw-semibold">
+                        {{ candidate.interview.interview_time|time:"h:i A" }}
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">Mode</small>
+                    <div class="fw-semibold">
+                        {{ candidate.interview.get_interview_mode_display }}
+                    </div>
+                </div>
+                {% if candidate.interview.meeting_link %}
+                <a href="{{ candidate.interview.meeting_link }}"
+                   target="_blank"
+class="btn btn-sm btn-outline-primary w-100 mb-2">
+                    <i class="fas fa-video me-1"></i>Join Meeting
+                </a>
+                {% endif %}
+                <div>
+                    <span class="badge
+                        {% if candidate.interview.status == 'completed' %}bg-success
+                        {% elif candidate.interview.status == 'scheduled' %}bg-primary
+                        {% elif candidate.interview.status == 'rescheduled' %}bg-warning
+                        {% else %}bg-secondary{% endif %}">
+                        {{ candidate.interview.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Job Details -->
+            <div class="card-custom p-4">
+                <h6 class="fw-bold mb-3">
+                    <i class="fas fa-briefcase me-2 text-primary"></i>
+                    Job Details
+                </h6>
+                <div class="mb-2">
+                    <small class="text-muted">Position</small>
+                    <div class="fw-semibold">
+                        {{ candidate.job.title }}
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">
+                        Experience Required
+                    </small>
+                    <div class="fw-semibold">
+                        {{ candidate.job.get_experience_required_display }}
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">
+                        Education Required
+                    </small>
+                    <div class="fw-semibold">
+                        {{ candidate.job.education_required }}
+                    </div>
+                </div>
+                {% if candidate.job.salary_range %}
+                <div class="mb-2">
+                    <small class="text-muted">Salary</small>
+                    <div class="fw-semibold">
+                        {{ candidate.job.salary_range }}
+                    </div>
+                </div>
+                {% endif %}
+                <hr>
+                <small class="text-muted fw-semibold d-block mb-2">
+                    Required Skills
+                </small>
+                {% for skill in candidate.job.get_skills_list %}
+                    <span class="badge-skill">{{ skill }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

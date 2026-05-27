@@ -1,0 +1,221 @@
+{% extends 'recruitment/base.html' %}
+{% block title %}My Applications - HireIQ{% endblock %}
+
+{% block content %}
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2 class="fw-bold mb-1">
+            <i class="fas fa-tasks me-2"></i>My Applications
+        </h2>
+        <p class="mb-0 opacity-75">Track all your job applications</p>
+    </div>
+    <a href="{% url 'candidate_job_list' %}"
+       class="btn btn-primary-custom">
+        <i class="fas fa-briefcase me-2"></i>Browse More Jobs
+    </a>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card-custom p-4 text-center">
+            <div style="font-size:2rem;color:#4361ee;">
+                <i class="fas fa-paper-plane"></i>
+            </div>
+            <h3 class="fw-bold mt-2">{{ total }}</h3>
+            <p class="text-muted mb-0">Total Applied</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-custom p-4 text-center">
+            <div style="font-size:2rem;color:#f39c12;">
+                <i class="fas fa-clock"></i>
+            </div>
+            <h3 class="fw-bold mt-2">{{ under_review }}</h3>
+            <p class="text-muted mb-0">Under Review</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-custom p-4 text-center">
+            <div style="font-size:2rem;color:#2ecc71;">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h3 class="fw-bold mt-2">{{ shortlisted }}</h3>
+            <p class="text-muted mb-0">Shortlisted</p>
+        </div>
+    </div>
+</div>
+
+{% if app_data %}
+{% for item in app_data %} <div class="card-custom p-4 mb-3"> <div class="row align-items-center">
+
+```
+        <!-- LEFT -->
+        <div class="col-md-4">
+            <h5 class="fw-bold mb-1">
+                {{ item.application.job.title }}
+            </h5>
+            <p class="text-muted small mb-1">
+                <i class="fas fa-building me-1"></i>
+                {{ item.application.job.company.company_name }}
+            </p>
+            <p class="text-muted small mb-0">
+                <i class="fas fa-calendar me-1"></i>
+                Applied {{ item.application.uploaded_at|date:"M d, Y" }}
+            </p>
+        </div>
+
+        <!-- MIDDLE -->
+        <div class="col-md-4">
+
+            <!-- STATUS + SCORE -->
+            <div class="d-flex align-items-center gap-2 mb-2">
+
+                {% if item.score %}
+                    {% if item.score.is_shortlisted %}
+
+                        {% if item.application.interview %}
+                            <span class="badge bg-info">Interview Scheduled</span>
+                            <div class="text-muted small mt-1">
+                                {{ item.application.interview.interview_date|date:"M d, Y" }}
+                                at {{ item.application.interview.interview_time|time:"h:i A" }}
+                            </div>
+                        {% else %}
+                            <span class="badge bg-success">Shortlisted</span>
+                        {% endif %}
+
+                    {% else %}
+                        <span class="badge bg-warning text-dark">Under Review</span>
+                    {% endif %}
+                {% else %}
+                    <span class="badge bg-primary">Applied</span>
+                {% endif %}
+
+                {% if item.score %}
+                <span class="text-muted small">
+                    Score: {{ item.score.overall_score }}%
+                </span>
+                {% endif %}
+
+            </div>
+
+            <!-- PROGRESS BAR -->
+            <div class="progress" style="height:8px;">
+                <div class="progress-bar bg-{{ item.status_color }}"
+                     style="width:{{ item.progress }}%">
+                </div>
+            </div>
+
+            <!-- LABELS -->
+            <div class="d-flex justify-content-between mt-1">
+                <small class="text-muted" style="font-size:0.7rem;">Applied</small>
+                <small class="text-muted" style="font-size:0.7rem;">Review</small>
+                <small class="text-muted" style="font-size:0.7rem;">Shortlisted</small>
+                <small class="text-muted" style="font-size:0.7rem;">Interview</small>
+            </div>
+
+        </div>
+
+        <!-- RIGHT -->
+        <div class="col-md-4">
+            <div class="mb-2">
+                {% for skill in item.application.job.get_skills_list|slice:":4" %}
+                    <span class="badge-skill">{{ skill }}</span>
+                {% endfor %}
+            </div>
+
+            <a href="{% url 'candidate_job_detail' item.application.job.id %}"
+               class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-eye me-1"></i>View Job
+            </a>
+
+            {% if item.status == 'shortlisted' %}
+            <div class="mt-2">
+                <span class="badge bg-success px-3 py-2">
+                    <i class="fas fa-trophy me-1"></i>Shortlisted!
+                </span>
+            </div>
+
+            <a href="{% url 'candidate_interview_prep' item.application.job.id %}"
+               class="btn btn-sm btn-outline-primary mt-2">
+                <i class="fas fa-graduation-cap me-1"></i>
+                Prepare for Interview
+            </a>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- TIMELINE -->
+    <div class="mt-3 pt-3"
+         style="border-top:0.5px solid var(--bs-border-color);">
+        <div class="row g-2 text-center">
+
+            <div class="col-3">
+                <div class="d-flex flex-column align-items-center">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mb-1"
+                         style="width:32px;height:32px;background:#4361ee;color:white;">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <small class="text-success fw-bold" style="font-size:0.7rem;">
+                        Applied
+                    </small>
+                </div>
+            </div>
+
+            <div class="col-3">
+                <div class="d-flex flex-column align-items-center">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mb-1"
+                         style="width:32px;height:32px;
+                         {% if item.progress >= 40 %}background:#f39c12;{% else %}background:#dee2e6;{% endif %}
+                         color:white;">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <small class="{% if item.progress >= 40 %}text-warning fw-bold{% else %}text-muted{% endif %}"
+                           style="font-size:0.7rem;">
+                        Review
+                    </small>
+                </div>
+            </div>
+
+            <div class="col-3">
+                <div class="d-flex flex-column align-items-center">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mb-1"
+                         style="width:32px;height:32px;
+                         {% if item.progress >= 75 %}background:#2ecc71;{% else %}background:#dee2e6;{% endif %}
+                         color:white;">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <small class="{% if item.progress >= 75 %}text-success fw-bold{% else %}text-muted{% endif %}"
+                           style="font-size:0.7rem;">
+                        Shortlisted
+                    </small>
+                </div>
+            </div>
+
+            <div class="col-3">
+                <div class="d-flex flex-column align-items-center">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mb-1"
+                         style="width:32px;height:32px;
+                         {% if item.application.interview %}background:#3498db;{% else %}background:#dee2e6;{% endif %}
+                         color:white;">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <small class="{% if item.application.interview %}text-info fw-bold{% else %}text-muted{% endif %}"
+                           style="font-size:0.7rem;">
+                        Interview
+                    </small>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endfor %}
+
+{% else %} <div class="card-custom p-5 text-center"> <i class="fas fa-inbox fa-4x text-muted mb-4"></i> <h4 class="text-muted">No Applications Yet</h4> <p class="text-muted mb-4">
+Browse jobs and apply to track your progress here </p> <a href="{% url 'candidate_job_list' %}"
+        class="btn btn-primary-custom"> <i class="fas fa-briefcase me-2"></i>Browse Jobs </a> </div>
+{% endif %}
+{% endblock %}

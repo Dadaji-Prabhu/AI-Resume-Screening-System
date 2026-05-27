@@ -1,0 +1,356 @@
+{% extends 'recruitment/base.html' %}
+{% block title %}My Dashboard - HireIQ{% endblock %}
+
+{% block extra_css %}
+<style>
+.stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    border: none;
+    transition: transform 0.3s;
+}
+.stat-card:hover { transform: translateY(-4px); }
+.stat-icon {
+    width: 56px; height: 56px; border-radius: 14px;
+    display: flex; align-items: center;
+    justify-content: center; font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+.match-card {
+    border-radius: 14px; border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+}
+.match-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+.score-circle {
+    width: 64px; height: 64px; border-radius: 50%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-size: 1rem; font-weight: 800;
+    flex-shrink: 0;
+}
+.welcome-banner {
+    background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+    border-radius: 16px; color: white;
+    padding: 2rem; margin-bottom: 1.5rem;
+    position: relative; overflow: hidden;
+}
+.welcome-banner::after {
+    content: '';
+    position: absolute; right: -30px; top: -30px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="welcome-banner">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h2 class="fw-bold mb-1">
+                <i class="fas fa-user-graduate me-2"></i>
+                Welcome back, {{ profile.full_name }}!
+            </h2>
+            <p class="mb-3 opacity-75">
+                Here are your AI-powered job matches based on your resume
+            </p>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'candidate_upload_resume' %}"
+                   class="btn btn-light btn-sm">
+                    <i class="fas fa-upload me-1"></i>
+                    {% if profile.resume_file %}
+                        Update Resume
+                    {% else %}
+                        Upload Resume
+                    {% endif %}
+                </a>
+                <a href="{% url 'candidate_job_list' %}"
+                   class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-briefcase me-1"></i>Browse Jobs
+                </a>
+                <a href="{% url 'application_tracker' %}"
+                   class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-tasks me-1"></i>My Applications
+                </a>
+            </div>
+        </div>
+        <div class="col-md-4 text-end d-none d-md-block">
+            <div style="font-size:6rem;opacity:0.15;">
+                <i class="fas fa-robot"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card text-center">
+            <div class="stat-icon mx-auto"
+                 style="background:#e8ecff;">
+                <i class="fas fa-briefcase" style="color:#4361ee;"></i>
+            </div>
+            <h3 class="fw-bold mb-0">{{ job_matches.count }}</h3>
+            <p class="text-muted small mb-0">Job Matches</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card text-center">
+            <div class="stat-icon mx-auto"
+                 style="background:#e8f8f1;">
+                <i class="fas fa-star" style="color:#2ecc71;"></i>
+            </div>
+            <h3 class="fw-bold mb-0">
+                {% if top_match %}
+                    {{ top_match.overall_score }}%
+                {% else %}—{% endif %}
+            </h3>
+            <p class="text-muted small mb-0">Best Match</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card text-center">
+            <div class="stat-icon mx-auto"
+                 style="background:#fff3e0;">
+                <i class="fas fa-tools" style="color:#f39c12;"></i>
+            </div>
+            <h3 class="fw-bold mb-0">
+                {{ profile.get_skills_list|length }}
+            </h3>
+            <p class="text-muted small mb-0">Skills</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card text-center">
+            <div class="stat-icon mx-auto"
+                 style="background:#fde8e8;">
+                <i class="fas fa-paper-plane" style="color:#e74c3c;"></i>
+            </div>
+            <h3 class="fw-bold mb-0">{{ total_applied }}</h3>
+            <p class="text-muted small mb-0">Applied</p>
+        </div>
+    </div>
+</div>
+
+{% if not profile.resume_file %}
+<div class="card-custom p-5 text-center mb-4"
+     style="border: 2px dashed #4361ee;">
+    <i class="fas fa-file-upload fa-4x mb-4"
+       style="color:#4361ee;opacity:0.5;"></i>
+    <h4 class="fw-bold mb-2">Upload Your Resume to Get Started</h4>
+    <p class="text-muted mb-4">
+        Our AI will analyze your resume and match you with
+        the best available jobs instantly.
+    </p>
+    <a href="{% url 'candidate_upload_resume' %}"
+       class="btn btn-primary-custom btn-lg px-5">
+        <i class="fas fa-upload me-2"></i>Upload Resume Now
+    </a>
+</div>
+{% else %}
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card-custom p-4">
+            <div class="d-flex justify-content-between
+                        align-items-center mb-4">
+                <h5 class="fw-bold mb-0">
+                    <i class="fas fa-fire me-2 text-danger"></i>
+                    Top Job Matches
+                </h5>
+                <a href="{% url 'candidate_job_list' %}"
+                   class="btn btn-sm btn-outline-primary">
+                    View All Jobs
+                </a>
+            </div>
+
+            {% if job_matches %}
+                {% for match in job_matches|slice:":5" %}
+                <div class="match-card p-3 mb-3"
+                     style="border-left: 4px solid
+                     {% if match.overall_score >= 70 %}#2ecc71
+                     {% elif match.overall_score >= 50 %}#f39c12
+                     {% else %}#e74c3c{% endif %};
+                     background:white;border-radius:12px;">
+                    <div class="d-flex gap-3 align-items-center">
+                        <div class="score-circle"
+                             style="background:
+                             {% if match.overall_score >= 70 %}#e8f8f1;
+                             {% elif match.overall_score >= 50 %}#fff3e0;
+                             {% else %}#fde8e8;{% endif %}">
+                            <span style="color:
+                                {% if match.overall_score >= 70 %}#2ecc71;
+                                {% elif match.overall_score >= 50 %}#f39c12;
+                                {% else %}#e74c3c;{% endif %};
+                                font-size:0.85rem;">
+                                {{ match.overall_score }}%
+                            </span>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between
+                                        align-items-start">
+                                <div>
+                                    <h6 class="fw-bold mb-0">
+                                        {{ match.job.title }}
+                                    </h6>
+                                    <small class="text-muted">
+                                        <i class="fas fa-building me-1"></i>
+                                        {{ match.job.company.company_name }}
+                                        {% if match.job.location %}
+                                        · {{ match.job.location }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    {% if match.job.id in applied_job_ids %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>
+                                            Applied
+                                        </span>
+                                    {% else %}
+                                        <a href="{% url 'candidate_apply' match.job.id %}"
+                                           class="btn btn-sm btn-primary-custom">
+                                            Apply
+                                        </a>
+                                    {% endif %}
+                                    <a href="{% url 'candidate_job_detail' match.job.id %}"
+                                       class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <div class="progress"
+                                     style="height:4px;">
+                                    <div class="progress-bar
+                                        {% if match.overall_score >= 70 %}bg-success
+                                        {% elif match.overall_score >= 50 %}bg-warning
+                                        {% else %}bg-danger{% endif %}"
+                                        style="width:{{ match.overall_score }}%">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-1">
+                                {% for skill in match.job.get_skills_list|slice:":4" %}
+                                    <span class="badge-skill"
+                                          style="font-size:0.7rem;">
+                                        {{ skill }}
+                                    </span>
+                                {% endfor %}
+                                <span class="badge bg-secondary ms-1"
+                                      style="font-size:0.7rem;">
+                                    {{ match.job.get_experience_required_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <p class="text-muted mb-3">
+                        No matches found. Try updating your resume!
+                    </p>
+                    <a href="{% url 'candidate_upload_resume' %}"
+                       class="btn btn-primary-custom">
+                        Update Resume
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card-custom p-4 mb-3">
+            <h6 class="fw-bold mb-3">
+                <i class="fas fa-user me-2 text-primary"></i>
+                My Profile
+            </h6>
+            <div class="text-center mb-3">
+                <div style="width:64px;height:64px;
+                            background:linear-gradient(135deg,#4361ee,#4cc9f0);
+                            border-radius:50%;display:flex;
+                            align-items:center;justify-content:center;
+                            color:white;font-size:1.5rem;
+                            font-weight:700;margin:0 auto;">
+                    {{ profile.full_name|first|upper }}
+                </div>
+                <h6 class="fw-bold mt-2 mb-0">
+                    {{ profile.full_name }}
+                </h6>
+                <small class="text-muted">
+                    {{ request.user.email }}
+                </small>
+            </div>
+            <div class="d-grid gap-2">
+                {% if profile.linkedin_url %}
+                <a href="{{ profile.linkedin_url }}" target="_blank"
+                   class="btn btn-outline-primary btn-sm">
+                    <i class="fab fa-linkedin me-1"></i>LinkedIn
+                </a>
+                {% endif %}
+                {% if profile.github_url %}
+                <a href="{{ profile.github_url }}" target="_blank"
+                   class="btn btn-outline-dark btn-sm">
+                    <i class="fab fa-github me-1"></i>GitHub
+                </a>
+                {% endif %}
+                <a href="{% url 'candidate_profile_edit' %}"
+                   class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-edit me-1"></i>Edit Profile
+                </a>
+                <a href="{% url 'candidate_upload_resume' %}"
+                   class="btn btn-primary-custom btn-sm">
+                    <i class="fas fa-sync me-1"></i>Update Resume
+                </a>
+            </div>
+        </div>
+
+        <div class="card-custom p-4 mb-3">
+            <h6 class="fw-bold mb-3">
+                <i class="fas fa-tools me-2 text-primary"></i>
+                My Skills
+                <span class="badge bg-primary rounded-pill ms-1">
+                    {{ profile.get_skills_list|length }}
+                </span>
+            </h6>
+            {% for skill in profile.get_skills_list %}
+                <span class="badge-skill">{{ skill }}</span>
+            {% empty %}
+                <p class="text-muted small">
+                    Upload resume to detect skills
+                </p>
+            {% endfor %}
+        </div>
+
+        <div class="card-custom p-4">
+            <h6 class="fw-bold mb-3">
+                <i class="fas fa-bolt me-2 text-warning"></i>
+                Quick Actions
+            </h6>
+            <div class="d-grid gap-2">
+                <a href="{% url 'application_tracker' %}"
+                   class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-tasks me-2"></i>Track Applications
+                </a>
+                <a href="{% url 'notifications_page' %}"
+                   class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-bell me-2"></i>Notifications
+                </a>
+                <a href="{% url 'candidate_job_list' %}"
+                   class="btn btn-outline-success btn-sm">
+                    <i class="fas fa-briefcase me-2"></i>Browse All Jobs
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

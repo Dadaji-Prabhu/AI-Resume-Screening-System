@@ -1,0 +1,90 @@
+{% extends 'recruitment/base.html' %}
+{% block title %}Edit Profile - HireIQ{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="page-header">
+            <h2 class="fw-bold mb-1">
+                <i class="fas fa-user-edit me-2"></i>Edit My Profile
+            </h2>
+            <p class="mb-0 opacity-75">Update your personal information</p>
+        </div>
+        <div class="card-custom p-4">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="text-center mb-4">
+                    <div style="width:80px;height:80px;background:linear-gradient(135deg,#4361ee,#4cc9f0);
+                                border-radius:50%;display:flex;align-items:center;
+                                justify-content:center;color:white;font-size:2rem;
+                                font-weight:700;margin:0 auto;">
+                        {{ profile.full_name|first|upper }}
+                    </div>
+                    <h5 class="fw-bold mt-2 mb-0">{{ profile.full_name }}</h5>
+                    <small class="text-muted">{{ request.user.username }}</small>
+                </div>
+                <h6 class="fw-bold text-primary mb-3">
+                    <i class="fas fa-user me-2"></i>Personal Information
+                </h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Full Name *</label>
+                        <input type="text" name="full_name" class="form-control"
+                               value="{{ profile.full_name }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Phone *</label>
+                        <input type="text" name="phone" class="form-control"
+                               value="{{ profile.phone }}" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Email</label>
+                        <input type="email" name="email" class="form-control"
+                               value="{{ request.user.email }}">
+                    </div>
+                </div>
+                <h6 class="fw-bold text-primary mb-3">
+                    <i class="fas fa-link me-2"></i>Social Links
+                </h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            <i class="fab fa-linkedin me-1" style="color:#0077b5;"></i>
+                            LinkedIn URL
+                        </label>
+                        <input type="url" name="linkedin_url" class="form-control"
+                               value="{{ profile.linkedin_url }}"
+                               placeholder="https://linkedin.com/in/yourprofile">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            <i class="fab fa-github me-1"></i>GitHub URL
+                        </label>
+                        <input type="url" name="github_url" class="form-control"
+                               value="{{ profile.github_url }}"
+                               placeholder="https://github.com/yourusername">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-globe me-1" style="color:#4361ee;"></i>
+                            Portfolio URL
+                        </label>
+                        <input type="url" name="portfolio_url" class="form-control"
+                               value="{{ profile.portfolio_url }}"
+                               placeholder="https://yourportfolio.com">
+                    </div>
+                </div>
+                <div class="d-flex gap-3">
+                    <button type="submit" class="btn btn-primary-custom px-5">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                    <a href="{% url 'candidate_dashboard' %}"
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

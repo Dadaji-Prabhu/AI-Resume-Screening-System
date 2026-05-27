@@ -1,0 +1,95 @@
+{% extends 'recruitment/base.html' %}
+{% block title %}Send Offer Letter - HireIQ{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="page-header">
+            <h2 class="fw-bold mb-1">
+                <i class="fas fa-file-contract me-2"></i>
+                Send Offer Letter
+            </h2>
+            <p class="mb-0 opacity-75">
+                {{ candidate.full_name }} — {{ job.title }}
+            </p>
+        </div>
+
+        {% if existing_offer %}
+        <div class="alert alert-info mb-4">
+            <i class="fas fa-info-circle me-2"></i>
+            An offer was previously sent on
+            {{ existing_offer.sent_at|date:"M d, Y" }}.
+            Status: <strong>
+                {{ existing_offer.get_status_display }}
+            </strong>. Submitting again will resend.
+        </div>
+        {% endif %}
+
+        <div class="card-custom p-4">
+            <form method="POST">
+                {% csrf_token %}
+                <h6 class="fw-bold text-primary mb-3">
+                    <i class="fas fa-briefcase me-2"></i>
+                    Offer Details
+                </h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Designation / Job Title *
+                        </label>
+                        <input type="text" name="designation"
+                               class="form-control"
+                               value="{{ job.title }}"
+                               required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Salary Package *
+                        </label>
+                        <input type="text" name="salary_package"
+                               class="form-control"
+                               placeholder="e.g. 6 LPA / ₹50,000 per month"
+                               required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Joining Date *
+                        </label>
+                        <input type="date" name="joining_date"
+                               class="form-control" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            Additional Notes / Terms
+                        </label>
+                        <textarea name="notes"
+                                  class="form-control" rows="4"
+                                  placeholder="Additional terms, conditions, or welcome message...">
+                        </textarea>
+                    </div>
+                </div>
+
+                <div class="alert alert-success mb-4">
+                    <i class="fas fa-envelope me-2"></i>
+                    A formal offer letter will be sent to
+                    <strong>{{ candidate.email }}</strong>
+                    and a notification will appear on their
+                    dashboard immediately.
+                </div>
+
+                <div class="d-flex gap-3">
+                    <button type="submit"
+                            class="btn btn-success px-5">
+                        <i class="fas fa-paper-plane me-2"></i>
+                        Send Offer Letter
+                    </button>
+                    <a href="{% url 'candidate_detail' candidate.id %}"
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

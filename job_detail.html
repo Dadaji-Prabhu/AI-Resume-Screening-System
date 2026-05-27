@@ -1,0 +1,237 @@
+{% extends 'recruitment/base.html' %}
+{% block title %}{{ job.title }} - HireIQ{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+    <!-- LEFT SIDE (JOB DETAILS) -->
+    <div class="col-lg-4">
+        <div class="card-custom p-4 mb-4">
+            <h4 class="fw-bold mb-1">{{ job.title }}</h4>
+            <span class="badge bg-success mb-3">Active</span>
+
+            <p class="text-muted">{{ job.description }}</p>
+
+            <hr>
+
+            <div class="mb-3">
+                <small class="text-muted fw-semibold d-block mb-2">
+                    <i class="fas fa-tools me-1"></i>Required Skills
+                </small>
+                {% for skill in job.get_skills_list %}
+                    <span class="badge-skill">{{ skill }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="mb-2">
+                <small class="text-muted">
+                    <i class="fas fa-clock me-1"></i>Experience:
+                </small>
+                <span class="fw-semibold ms-1">
+                    {{ job.get_experience_required_display }}
+                </span>
+            </div>
+
+            <div class="mb-2">
+                <small class="text-muted">
+                    <i class="fas fa-graduation-cap me-1"></i>Education:
+                </small>
+                <span class="fw-semibold ms-1">
+                    {{ job.education_required }}
+                </span>
+            </div>
+
+            <div class="mb-3">
+                <small class="text-muted">
+                    <i class="fas fa-calendar me-1"></i>Posted:
+                </small>
+                <span class="fw-semibold ms-1">
+                    {{ job.created_at|date:"M d, Y" }}
+                </span>
+            </div>
+
+            <a href="{% url 'upload_resume' job.id %}"
+               class="btn btn-primary-custom w-100 mb-2">
+                <i class="fas fa-upload me-2"></i>Upload Resume
+            </a>
+
+            <a href="{% url 'edit_job' job.id %}"
+               class="btn btn-outline-warning w-100 mb-2">
+                <i class="fas fa-edit me-2"></i>Edit Job
+            </a>
+
+            <a href="{% url 'delete_all_candidates' job.id %}"
+               class="btn btn-outline-warning w-100 mb-2">
+                <i class="fas fa-users-slash me-2"></i>Delete All Candidates
+            </a>
+
+            <a href="{% url 'delete_job' job.id %}"
+               class="btn btn-outline-danger w-100">
+                <i class="fas fa-trash me-2"></i>Delete This Job
+            </a>
+        </div>
+    </div>
+
+    <!-- RIGHT SIDE (CANDIDATES) -->
+    <div class="col-lg-8">
+        <div class="card-custom p-4">
+
+            <!-- HEADER -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold mb-0">
+                    <i class="fas fa-users me-2 text-primary"></i>
+                    Candidates ({{ candidate_data|length }})
+                </h4>
+
+                <div class="d-flex gap-2">
+                    <a href="{% url 'recalculate_all_scores' job.id %}"
+                       class="btn btn-sm btn-warning">
+                        <i class="fas fa-sync me-1"></i>
+                        Recalculate All Scores
+                    </a>
+
+                    <a href="{% url 'upload_resume' job.id %}"
+                       class="btn btn-sm btn-primary-custom">
+                        <i class="fas fa-plus me-1"></i>
+                        Add Resume
+                    </a>
+
+                    <a href="{% url 'kanban_board' job.id %}"
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-columns me-1"></i>
+                        Workflow View
+                    </a>
+
+                </div>
+            </div>
+
+            {% if candidate_data %}
+
+            <!-- TABLE -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Rank</th>
+                            <th>Candidate</th>
+                            <th>Skills</th>
+                            <th>Score</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for cd in candidate_data %}
+                        <tr>
+
+                            <!-- RANK -->
+                            <td>
+                                {% if forloop.counter == 1 %}
+                                    <i class="fas fa-trophy text-warning"></i>
+                                {% elif forloop.counter == 2 %}
+                                    <i class="fas fa-medal" style="color:#C0C0C0"></i>
+                                {% elif forloop.counter == 3 %}
+                                    <i class="fas fa-medal" style="color:#CD7F32"></i>
+                                {% else %}
+                                    #{{ forloop.counter }}
+                                {% endif %}
+                            </td>
+
+                            <!-- NAME -->
+                            <td>
+                                <div class="fw-semibold">
+                                    {{ cd.candidate.full_name }}
+                                </div>
+                                <small class="text-muted">
+                                    {{ cd.candidate.email }}
+                                </small>
+                            </td>
+
+                            <!-- SKILLS SCORE -->
+                            <td>
+                                {% if cd.score %}
+                                    <div class="progress" style="height:6px;width:80px;">
+                                        <div class="progress-bar bg-primary"
+                                             style="width:{{ cd.score.skills_score }}%">
+                                        </div>
+                                    </div>
+                                    <small>{{ cd.score.skills_score }}%</small>
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+                            <!-- OVERALL SCORE -->
+                            <td>
+                                {% if cd.score %}
+                                    <span class="fw-bold"
+                                          style="
+                                          {% if cd.score.overall_score >= 70 %}
+                                              color:#2ecc71;
+                                          {% elif cd.score.overall_score >= 50 %}
+                                              color:#f39c12;
+                                          {% else %}
+                                              color:#e74c3c;
+                                          {% endif %}
+                                          ">
+                                        {{ cd.score.overall_score }}%
+                                    </span>
+                                {% else %}
+                                    <a href="{% url 'recalculate_score' cd.candidate.id %}"
+                                       class="btn btn-xs btn-warning"
+                                       style="font-size:11px;padding:3px 8px;">
+                                        Calculate
+                                    </a>
+                                {% endif %}
+                            </td>
+
+                            <!-- STATUS -->
+                            <td>
+                                {% if cd.score %}
+                                    {% if cd.score.is_shortlisted %}
+                                        <span class="badge bg-success">Shortlisted</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Pending</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">
+                                        No Score
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <!-- ACTION -->
+                            <td>
+                                <a href="{% url 'candidate_detail' cd.candidate.id %}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% else %}
+
+            <!-- EMPTY -->
+            <div class="text-center py-5">
+                <i class="fas fa-user-plus fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No resumes uploaded yet.</p>
+                <a href="{% url 'upload_resume' job.id %}"
+                   class="btn btn-primary-custom">
+                    <i class="fas fa-upload me-2"></i>
+                    Upload First Resume
+                </a>
+            </div>
+
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

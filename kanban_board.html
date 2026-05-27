@@ -1,0 +1,469 @@
+{% extends 'recruitment/base.html' %}
+{% block title %}Kanban Board - {{ job.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.kanban-wrapper {
+    overflow-x: auto;
+    padding-bottom: 1rem;
+}
+.kanban-board {
+    display: flex;
+    gap: 1rem;
+    min-width: max-content;
+    align-items: flex-start;
+}
+.kanban-column {
+    width: 240px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: var(--bs-light);
+    padding: 0;
+    overflow: hidden;
+}
+.kanban-header {
+    padding: 12px 14px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.kanban-header h6 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+}
+.kanban-count {
+    background: rgba(255,255,255,0.3);
+    color: white;
+    border-radius: 99px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.kanban-cards {
+    padding: 10px;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.kanban-card {
+    background: white;
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    border: 1px solid #e9ecef;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: block;
+    color: inherit;
+}
+.kanban-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    border-color: #4361ee;
+    color: inherit;
+}
+.kanban-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg,#4361ee,#4cc9f0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.score-pill {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 99px;
+}
+.kanban-empty {
+    text-align: center;
+    padding: 20px 10px;
+    color: #adb5bd;
+    font-size: 12px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">
+            <i class="fas fa-columns me-2 text-primary"></i>
+            Hiring Pipeline
+        </h3>
+        <p class="text-muted mb-0">
+            {{ job.title }} ·
+            {{ job.company.company_name }} ·
+            {{ total }} total candidates
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'job_detail' job.id %}"
+           class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-table me-1"></i>Table View
+        </a>
+        <a href="{% url 'upload_resume' job.id %}"
+           class="btn btn-primary-custom btn-sm">
+            <i class="fas fa-plus me-1"></i>Add Candidate
+        </a>
+    </div>
+</div>
+
+<!-- Pipeline Stats -->
+<div class="row g-3 mb-4">
+    <div class="col">
+        <div class="card-custom p-3 text-center">
+            <div class="fw-bold" style="color:#6c757d;font-size:1.2rem;">
+                {{ pipeline.applied|length }}
+            </div>
+            <small class="text-muted">Applied</small>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card-custom p-3 text-center">
+            <div class="fw-bold" style="color:#4361ee;font-size:1.2rem;">
+                {{ pipeline.screening|length }}
+            </div>
+            <small class="text-muted">Screening</small>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card-custom p-3 text-center">
+            <div class="fw-bold" style="color:#f39c12;font-size:1.2rem;">
+                {{ pipeline.shortlisted|length }}
+            </div>
+            <small class="text-muted">Shortlisted</small>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card-custom p-3 text-center">
+            <div class="fw-bold" style="color:#17a2b8;font-size:1.2rem;">
+{{ pipeline.interview|length }}
+            </div>
+            <small class="text-muted">Interview</small>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card-custom p-3 text-center">
+            <div class="fw-bold" style="color:#6f42c1;font-size:1.2rem;">
+                {{ pipeline.offer|length }}
+            </div>
+            <small class="text-muted">Offer Sent</small>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card-custom p-3 text-center">
+            <div class="fw-bold" style="color:#2ecc71;font-size:1.2rem;">
+                {{ pipeline.hired|length }}
+            </div>
+            <small class="text-muted">Hired</small>
+        </div>
+    </div>
+</div>
+
+<!-- Kanban Board -->
+<div class="kanban-wrapper">
+    <div class="kanban-board">
+
+        <!-- Applied -->
+        <div class="kanban-column">
+            <div class="kanban-header"
+                 style="background:#6c757d;">
+                <h6>
+                    <i class="fas fa-paper-plane me-1"></i>
+                    Applied
+                </h6>
+                <span class="kanban-count">
+                    {{ pipeline.applied|length }}
+                </span>
+            </div>
+            <div class="kanban-cards">
+                {% for card in pipeline.applied %}
+                <a href="{% url 'candidate_detail' card.candidate.id %}"
+                   class="kanban-card">
+                    <div class="d-flex gap-2 mb-2">
+                        <div class="kanban-avatar">
+                            {{ card.candidate.full_name|first|upper }}
+                        </div>
+                        <div>
+                            <div class="fw-semibold"
+                                 style="font-size:12px;line-height:1.3;">
+                                {{ card.candidate.full_name|truncatechars:20 }}
+                            </div>
+                            <div class="text-muted"
+                                 style="font-size:10px;">
+                                {{ card.candidate.uploaded_at|date:"M d" }}
+                            </div>
+                        </div>
+                    </div>
+                    {% if card.score %}
+                    <span class="score-pill"
+                          style="background:#f0f0f0;color:#666;">
+                        {{ card.score.overall_score }}%
+                    </span>
+                    {% endif %}
+                </a>
+                {% empty %}
+                <div class="kanban-empty">
+                    <i class="fas fa-inbox mb-1"></i><br>No candidates
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Screening -->
+        <div class="kanban-column">
+            <div class="kanban-header"
+                 style="background:#4361ee;">
+                <h6>
+                    <i class="fas fa-search me-1"></i>
+                    Screening
+                </h6>
+                <span class="kanban-count">
+                    {{ pipeline.screening|length }}
+                </span>
+            </div>
+            <div class="kanban-cards">
+                {% for card in pipeline.screening %}
+                <a href="{% url 'candidate_detail' card.candidate.id %}"
+                   class="kanban-card">
+                    <div class="d-flex gap-2 mb-2">
+                        <div class="kanban-avatar">
+                            {{ card.candidate.full_name|first|upper }}
+                        </div>
+                        <div>
+                            <div class="fw-semibold"
+                                 style="font-size:12px;line-height:1.3;">
+                                {{ card.candidate.full_name|truncatechars:20 }}
+                            </div>
+<div class="text-muted"
+                                 style="font-size:10px;">
+                                {{ card.candidate.email|truncatechars:20 }}
+                            </div>
+                        </div>
+                    </div>
+                    {% if card.score %}
+                    <span class="score-pill"
+                          style="background:#e8ecff;color:#4361ee;">
+                        {{ card.score.overall_score }}%
+                    </span>
+                    {% endif %}
+                    <div class="mt-1">
+                        {% for skill in card.candidate.get_skills_list|slice:":2" %}
+                        <span style="font-size:9px;background:#f0f0f0;
+                                     padding:1px 5px;border-radius:3px;
+                                     margin-right:2px;">
+                            {{ skill }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </a>
+                {% empty %}
+                <div class="kanban-empty">
+                    <i class="fas fa-inbox mb-1"></i><br>No candidates
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Shortlisted -->
+        <div class="kanban-column">
+            <div class="kanban-header"
+                 style="background:#f39c12;">
+                <h6>
+                    <i class="fas fa-star me-1"></i>
+                    Shortlisted
+                </h6>
+                <span class="kanban-count">
+                    {{ pipeline.shortlisted|length }}
+                </span>
+            </div>
+            <div class="kanban-cards">
+                {% for card in pipeline.shortlisted %}
+                <a href="{% url 'candidate_detail' card.candidate.id %}"
+                   class="kanban-card">
+                    <div class="d-flex gap-2 mb-2">
+                        <div class="kanban-avatar"
+                             style="background:linear-gradient(135deg,#f39c12,#e67e22);">
+                            {{ card.candidate.full_name|first|upper }}
+                        </div>
+                        <div>
+                            <div class="fw-semibold"
+                                 style="font-size:12px;line-height:1.3;">
+                                {{ card.candidate.full_name|truncatechars:20 }}
+                            </div>
+                            <div style="font-size:10px;color:#f39c12;">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Shortlisted
+                            </div>
+                        </div>
+                    </div>
+                    {% if card.score %}
+                    <span class="score-pill"
+                          style="background:#fff3cd;color:#856404;">
+                        {{ card.score.overall_score }}%
+                    </span>
+                    {% endif %}
+                </a>
+                {% empty %}
+                <div class="kanban-empty">
+                    <i class="fas fa-inbox mb-1"></i><br>No candidates
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Interview -->
+        <div class="kanban-column">
+            <div class="kanban-header"
+                 style="background:#17a2b8;">
+                <h6>
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    Interview
+                </h6>
+                <span class="kanban-count">
+                    {{ pipeline.interview|length }}
+                </span>
+            </div>
+            <div class="kanban-cards">
+                {% for card in pipeline.interview %}
+                <a href="{% url 'candidate_detail' card.candidate.id %}"
+class="kanban-card">
+                    <div class="d-flex gap-2 mb-2">
+                        <div class="kanban-avatar"
+                             style="background:linear-gradient(135deg,#17a2b8,#138496);">
+                            {{ card.candidate.full_name|first|upper }}
+                        </div>
+                        <div>
+                            <div class="fw-semibold"
+                                 style="font-size:12px;line-height:1.3;">
+                                {{ card.candidate.full_name|truncatechars:18 }}
+                            </div>
+                            {% if card.candidate.interview %}
+                            <div style="font-size:10px;color:#17a2b8;">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ card.candidate.interview.interview_date|date:"M d" }}
+                                {{ card.candidate.interview.interview_time|time:"h:i A" }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if card.candidate.interview %}
+                    <span style="font-size:9px;padding:2px 6px;
+                                 border-radius:3px;
+                                 background:#d1ecf1;color:#0c5460;">
+                        {{ card.candidate.interview.get_interview_mode_display }}
+                    </span>
+                    {% endif %}
+                </a>
+                {% empty %}
+                <div class="kanban-empty">
+                    <i class="fas fa-inbox mb-1"></i><br>No candidates
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Offer Sent -->
+        <div class="kanban-column">
+            <div class="kanban-header"
+                 style="background:#6f42c1;">
+                <h6>
+                    <i class="fas fa-file-contract me-1"></i>
+                    Offer Sent
+                </h6>
+                <span class="kanban-count">
+                    {{ pipeline.offer|length }}
+                </span>
+            </div>
+            <div class="kanban-cards">
+                {% for card in pipeline.offer %}
+                <a href="{% url 'candidate_detail' card.candidate.id %}"
+                   class="kanban-card">
+                    <div class="d-flex gap-2 mb-2">
+                        <div class="kanban-avatar"
+                             style="background:linear-gradient(135deg,#6f42c1,#5a32a3);">
+                            {{ card.candidate.full_name|first|upper }}
+                        </div>
+                        <div>
+                            <div class="fw-semibold"
+                                 style="font-size:12px;line-height:1.3;">
+                                {{ card.candidate.full_name|truncatechars:18 }}
+                            </div>
+                            {% if card.candidate.offer_letter %}
+                            <div style="font-size:10px;color:#6f42c1;">
+                                {{ card.candidate.offer_letter.salary_package }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if card.candidate.offer_letter %}
+                    <span style="font-size:9px;padding:2px 6px;
+                                 border-radius:3px;
+                                 background:#e9d8fd;color:#4a1a8c;">
+                        {{ card.candidate.offer_letter.get_status_display }}
+                    </span>
+                    {% endif %}
+                </a>
+                {% empty %}
+                <div class="kanban-empty">
+                    <i class="fas fa-inbox mb-1"></i><br>No offers yet
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+<!-- Hired -->
+        <div class="kanban-column">
+            <div class="kanban-header"
+                 style="background:#2ecc71;">
+                <h6>
+                    <i class="fas fa-trophy me-1"></i>
+                    Hired
+                </h6>
+                <span class="kanban-count">
+                    {{ pipeline.hired|length }}
+                </span>
+            </div>
+            <div class="kanban-cards">
+                {% for card in pipeline.hired %}
+                <a href="{% url 'candidate_detail' card.candidate.id %}"
+                   class="kanban-card">
+                    <div class="d-flex gap-2">
+                        <div class="kanban-avatar"
+                             style="background:linear-gradient(135deg,#2ecc71,#27ae60);">
+                            {{ card.candidate.full_name|first|upper }}
+                        </div>
+                        <div>
+                            <div class="fw-semibold"
+                                 style="font-size:12px;line-height:1.3;">
+                                {{ card.candidate.full_name|truncatechars:18 }}
+                            </div>
+                            <div style="font-size:10px;color:#2ecc71;">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Offer Accepted
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {% empty %}
+                <div class="kanban-empty">
+                    <i class="fas fa-trophy mb-1"></i><br>No hires yet
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

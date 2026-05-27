@@ -1,0 +1,251 @@
+{% extends 'recruitment/base.html' %}
+{% block title %}HireIQ - Home{% endblock %}
+
+{% block content %}
+<div class="page-header text-center">
+    <h1 class="display-5 fw-bold mb-2">
+        <i class="fas fa-robot me-3"></i>HireIQ
+    </h1>
+    <p class="lead mb-0">
+        <b> AI-Powered Resume Screening & Hiring Intelligence Platform </b>
+    </p>
+</div>
+
+<!-- ✅ METRICS -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card-custom p-4 text-center">
+            <div style="font-size:2.5rem; color:#4361ee;">
+                <i class="fas fa-briefcase"></i>
+            </div>
+            <h2 class="fw-bold mt-2">{{ total_jobs }}</h2>
+            <p class="text-muted mb-0">Active Jobs</p>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card-custom p-4 text-center">
+            <div style="font-size:2.5rem; color:#4cc9f0;">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <h2 class="fw-bold mt-2">{{ total_resumes }}</h2>
+            <p class="text-muted mb-0">Resumes Screened</p>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card-custom p-4 text-center">
+            <div style="font-size:2.5rem; color:#f39c12;">
+                <i class="fas fa-star"></i>
+            </div>
+            <h2 class="fw-bold mt-2">{{ avg_score }}%</h2>
+            <p class="text-muted mb-0">Avg Match Score</p>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card-custom p-4 text-center">
+            <div style="font-size:2.5rem; color:#2ecc71;">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2 class="fw-bold mt-2">{{ shortlisted }}</h2>
+            <p class="text-muted mb-0">Shortlisted</p>
+        </div>
+    </div>
+</div>
+
+{% if not company.is_verified %}
+<div class="alert mb-4"
+     style="background:linear-gradient(135deg,#fff3cd,#ffeaa7);
+            border:none;border-radius:12px;
+            border-left:4px solid #f39c12;">
+    <div class="d-flex align-items-center
+                justify-content-between flex-wrap gap-3">
+        <div>
+            <h6 class="fw-bold mb-1" style="color:#856404;">
+                <i class="fas fa-shield-alt me-2"></i>
+                {% if verification_status == 'pending' %}
+                    Verification OTP Sent — Enter OTP to Complete
+                {% else %}
+                    Verify Your Company to Unlock All Features
+                {% endif %}
+            </h6>
+            <p class="mb-0 small" style="color:#856404;">
+                {% if verification_status == 'pending' %}
+                    OTP was sent to {{ company.company_email }}.
+                    Click below to enter OTP and get verified.
+                {% else %}
+                    Get a ✅ Verified badge. Candidates trust
+                    verified companies more. Takes only 2 minutes.
+                {% endif %}
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            {% if verification_status == 'pending' %}
+            <a href="{% url 'confirm_company_email' %}"
+               class="btn btn-warning btn-sm fw-bold">
+                <i class="fas fa-key me-1"></i>
+                Enter OTP
+            </a>
+            {% else %}
+            <a href="{% url 'verify_company_email' %}"
+               class="btn btn-warning btn-sm fw-bold">
+                <i class="fas fa-shield-alt me-1"></i>
+                Verify Now
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="alert mb-4"
+     style="background:linear-gradient(135deg,#d4edda,#c3e6cb);
+            border:none;border-radius:12px;
+            border-left:4px solid #2ecc71;">
+    <div class="d-flex align-items-center
+                justify-content-between">
+        <div>
+            <h6 class="fw-bold mb-1" style="color:#155724;">
+                <i class="fas fa-check-circle me-2"></i>
+                ✅ Verified Company
+                {% if company.domain_match %}
+                <span class="badge bg-success ms-2"
+                      style="font-size:10px;">
+                    Domain Matched
+                </span>
+                {% endif %}
+            </h6>
+            <p class="mb-0 small" style="color:#155724;">
+                Verified on
+                {{ company.verified_at|date:"M d, Y" }}.
+                Your verified badge is visible to all candidates.
+            </p>
+        </div>
+        <div class="text-end">
+            <small style="color:#155724;">
+                Profile: {{ profile_completeness }}%
+            </small>
+            <div class="progress mt-1"
+                 style="height:6px;width:100px;">
+                <div class="progress-bar bg-success"
+                     style="width:{{ profile_completeness }}%">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+
+<!-- 🔥 NEW: UNSCORED WARNING -->
+{% if unscored_count > 0 %}
+<div class="alert alert-warning d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>{{ unscored_count }} candidates</strong>
+        don't have scores yet. Go to each job and click
+        "Recalculate All Scores".
+    </div>
+    <a href="{% url 'job_list' %}" class="btn btn-warning btn-sm">
+        <i class="fas fa-sync me-1"></i>Fix Now
+    </a>
+</div>
+{% endif %}
+
+<!-- MAIN CONTENT -->
+<div class="row g-4">
+
+    <!-- LEFT -->
+    <div class="col-lg-8">
+        <div class="card-custom p-4">
+            <h4 class="fw-bold mb-3">
+                <i class="fas fa-list me-2 text-primary"></i>Recent Job Postings
+            </h4>
+
+            {% if recent_jobs %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Job Title</th>
+                            <th>Experience</th>
+                            <th>Posted</th>
+                            <th>Resumes</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for job in recent_jobs %}
+                        <tr>
+                            <td class="fw-semibold">{{ job.title }}</td>
+                            <td>{{ job.get_experience_required_display }}</td>
+                            <td>{{ job.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                <span class="badge bg-primary rounded-pill">
+                                    {{ job.candidates.count }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'job_detail' job.id %}"
+                                   class="btn btn-sm btn-primary-custom">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No jobs posted yet.</p>
+                <a href="{% url 'create_job' %}" class="btn btn-primary-custom">
+                    <i class="fas fa-plus me-2"></i>Post First Job
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="col-lg-4">
+        <div class="card-custom p-4 mb-4">
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-rocket me-2 text-primary"></i>Quick Actions
+            </h5>
+
+            <div class="d-grid gap-2">
+                <a href="{% url 'create_job' %}" class="btn btn-primary-custom">
+                    <i class="fas fa-plus me-2"></i>Post New Job
+                </a>
+
+                <a href="{% url 'job_list' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-briefcase me-2"></i>View All Jobs
+                </a>
+
+                <a href="{% url 'analytics' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-chart-bar me-2"></i>View Analytics
+                </a>
+            </div>
+        </div>
+
+        <div class="card-custom p-4">
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-magic me-2 text-primary"></i>Key Features
+            </h5>
+
+            <ul class="list-unstyled">
+                <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>NLP Resume Parsing</li>
+                <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>AI Skill Matching</li>
+                <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Candidate Ranking</li>
+                <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>PDF & DOCX Support</li>
+                <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Analytics Dashboard</li>
+                <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Shortlist Management</li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

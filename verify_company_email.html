@@ -1,0 +1,267 @@
+{% extends 'recruitment/base.html' %}
+{% block title %}Verify Company — HireIQ{% endblock %}
+
+{% block extra_css %}
+<style>
+.step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 2rem;
+}
+.step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+.step-line {
+    width: 60px;
+    height: 2px;
+    background: #dee2e6;
+    margin: 0 8px;
+}
+.benefit-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    background: #f8f9fa;
+    margin-bottom: 10px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step">
+                <div class="step-circle"
+                     style="background:#4361ee;color:white;">
+                    1
+                </div>
+                <span class="fw-semibold small">
+                    Enter Company Email
+                </span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step">
+                <div class="step-circle"
+                     style="background:#e9ecef;color:#6c757d;">
+                    2
+                </div>
+                <span class="small text-muted">
+                    Verify OTP
+                </span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step">
+                <div class="step-circle"
+                     style="background:#e9ecef;color:#6c757d;">
+                    3
+                </div>
+                <span class="small text-muted">
+                    Verified ✅
+                </span>
+            </div>
+        </div>
+
+        <!-- Benefits Banner -->
+        <div class="card-custom p-4 mb-4"
+             style="background:linear-gradient(135deg,#1a1a2e,#0f3460);color:white;">
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-shield-alt me-2"
+                   style="color:#4cc9f0;"></i>
+                Why Verify Your Company?
+            </h5>
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <div style="background:rgba(255,255,255,0.08);
+                                border-radius:8px;padding:10px;">
+                        <i class="fas fa-check-circle me-2"
+                           style="color:#2ecc71;"></i>
+                        <small>
+                            Blue ✅ Verified badge on all
+                            your job posts
+                        </small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div style="background:rgba(255,255,255,0.08);
+                                border-radius:8px;padding:10px;">
+                        <i class="fas fa-check-circle me-2"
+                           style="color:#2ecc71;"></i>
+                        <small>
+                            Candidates trust verified companies
+                            more
+                        </small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div style="background:rgba(255,255,255,0.08);
+                                border-radius:8px;padding:10px;">
+                        <i class="fas fa-check-circle me-2"
+                           style="color:#2ecc71;"></i>
+                        <small>
+                            Higher applicant quality and
+                            quantity
+                        </small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div style="background:rgba(255,255,255,0.08);
+                                border-radius:8px;padding:10px;">
+                        <i class="fas fa-check-circle me-2"
+                           style="color:#2ecc71;"></i>
+                        <small>
+                            Protects candidates from
+                            fake companies
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="card-custom p-4">
+            <h5 class="fw-bold mb-1">
+                <i class="fas fa-envelope me-2 text-primary"></i>
+                Verify {{ company.company_name }}
+            </h5>
+            <p class="text-muted small mb-4">
+                Enter your official company email to receive
+                a verification OTP. Free emails like Gmail
+                are not accepted.
+            </p>
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <!-- Company Email -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Company Official Email *
+                        <span class="text-danger">
+                            (must match your company domain)
+                        </span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-envelope"></i>
+                        </span>
+                        <input type="email"
+                               name="company_email"
+                               class="form-control form-control-lg"
+                               placeholder="hr@yourcompany.com"
+                               value="{{ company.company_email }}"
+                               required>
+                    </div>
+                    <small class="text-muted">
+                        Example: hr@infosys.com,
+                        careers@startup.in,
+                        recruitment@company.com
+                    </small>
+                </div>
+
+                <!-- HR Official Email -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Your Work Email
+                        <span class="text-muted">(optional)</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-user-tie"></i>
+                        </span>
+                        <input type="email"
+                               name="hr_official_email"
+                               class="form-control"
+                               placeholder="yourname@yourcompany.com"
+                               value="{{ company.hr_official_email }}">
+                    </div>
+                    <small class="text-muted">
+                        Your personal work email address
+                    </small>
+                </div>
+
+                <!-- Website -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Company Website *
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-globe"></i>
+                        </span>
+                        <input type="url"
+                               name="website"
+                               class="form-control"
+                               placeholder="https://www.yourcompany.com"
+                               value="{{ company.website }}"
+                               required>
+                    </div>
+                    <small class="text-muted">
+                        Domain must match your company email domain
+                        for automatic domain verification
+                    </small>
+                </div>
+
+                <!-- LinkedIn -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">
+                        Company LinkedIn Page
+                        <span class="text-muted">(optional)</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fab fa-linkedin"></i>
+                        </span>
+                        <input type="url"
+                               name="linkedin_url"
+                               class="form-control"
+                               placeholder="https://linkedin.com/company/yourcompany"
+                               value="{{ company.linkedin_url }}">
+                    </div>
+                </div>
+
+                <!-- Domain Match Preview -->
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Domain Matching:</strong>
+                    If your company email is
+                    <code>hr@techcorp.com</code>
+                    and website is
+                    <code>www.techcorp.com</code>,
+                    both domains match and you get a
+                    domain-verified badge.
+                </div>
+
+                <button type="submit"
+                        class="btn btn-primary-custom w-100 btn-lg">
+                    <i class="fas fa-paper-plane me-2"></i>
+                    Send Verification OTP
+                </button>
+
+                <a href="{% url 'home' %}"
+                   class="btn btn-outline-secondary w-100 mt-2">
+                    Verify Later
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
