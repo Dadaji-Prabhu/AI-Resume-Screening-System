@@ -1,0 +1,288 @@
+{% extends 'recruitment/base.html' %}
+{% block title %}Schedule Interview - HireIQ{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="page-header">
+            <h2 class="fw-bold mb-1">
+                <i class="fas fa-calendar-alt me-2"></i>
+                {% if existing %}Reschedule{% else %}Schedule{% endif %}
+                Interview
+            </h2>
+            <p class="mb-0 opacity-75">
+                {{ candidate.full_name }} —
+                {{ candidate.job.title }}
+            </p>
+        </div>
+
+        <!-- Candidate Info Strip -->
+        <div class="card-custom p-3 mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:45px;height:45px;
+                            background:linear-gradient(135deg,#4361ee,#4cc9f0);
+                            border-radius:50%;display:flex;
+                            align-items:center;justify-content:center;
+                            color:white;font-size:1.1rem;font-weight:700;">
+                    {{ candidate.full_name|first|upper }}
+                </div>
+                <div>
+                    <div class="fw-bold">{{ candidate.full_name }}</div>
+                    <small class="text-muted">
+                        <i class="fas fa-envelope me-1"></i>
+                        {{ candidate.email }}
+                        <span class="ms-2">
+                            <i class="fas fa-phone me-1"></i>
+                            {{ candidate.phone }}
+                        </span>
+                    </small>
+                </div>
+                {% if existing %}
+                <span class="badge bg-warning ms-auto">
+                    Previously Scheduled
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card-custom p-4">
+            <form method="POST">
+                {% csrf_token %}
+
+                <h6 class="fw-bold text-primary mb-3">
+                    <i class="fas fa-calendar me-2"></i>
+                    Date & Time
+                </h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Interview Date *
+                        </label>
+                        <input type="date" name="interview_date"
+                               class="form-control form-control-lg"
+                               value="{% if existing %}{{ existing.interview_date|date:'Y-m-d' }}{% endif %}"
+                               min="{{ today }}"
+                               required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Interview Time *
+                        </label>
+                        <input type="time" name="interview_time"
+                               class="form-control form-control-lg"
+                               value="{% if existing %}{{ existing.interview_time|time:'H:i' }}{% endif %}"
+                               required>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-primary mb-3">
+                    <i class="fas fa-video me-2"></i>
+                    Interview Mode
+                </h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <div class="d-flex gap-3 flex-wrap">
+                            <div class="form-check flex-fill">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="interview_mode"
+                                       value="online"
+                                       id="modeOnline"
+                                       {% if not existing or existing.interview_mode == 'online' %}checked{% endif %}
+                                       onchange="toggleModeFields()">
+                                <label class="form-check-label fw-semibold"
+                                       for="modeOnline">
+                                    <i class="fas fa-video me-1 text-primary"></i>
+                                    Online (Video Call)
+                                </label>
+                            </div>
+                            <div class="form-check flex-fill">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="interview_mode"
+                                       value="offline"
+                                       id="modeOffline"
+                                       {% if existing and existing.interview_mode == 'offline' %}checked{% endif %}
+                                       onchange="toggleModeFields()">
+                                <label class="form-check-label fw-semibold"
+                                       for="modeOffline">
+                                    <i class="fas fa-building me-1 text-success"></i>
+                                    In-Person
+                                </label>
+                            </div>
+                            <div class="form-check flex-fill">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="interview_mode"
+                                       value="phone"
+                                       id="modePhone"
+                                       {% if existing and existing.interview_mode == 'phone' %}checked{% endif %}
+                                       onchange="toggleModeFields()">
+                                <label class="form-check-label fw-semibold"
+                                       for="modePhone">
+                                    <i class="fas fa-phone me-1 text-warning"></i>
+                                    Phone Call
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12" id="meetingLinkField">
+                        <label class="form-label fw-semibold">
+                            Meeting Link
+                            <small class="text-muted fw-normal">
+                                (Google Meet / Zoom / Teams)
+                            </small>
+                        </label>
+                        <input type="url" name="meeting_link"
+                               class="form-control"
+                               placeholder="https://meet.google.com/..."
+                               value="{% if existing %}{{ existing.meeting_link }}{% endif %}">
+                    </div>
+
+                    <div class="col-12" id="locationField"
+                         style="display:none;">
+                        <label class="form-label fw-semibold">
+                            Interview Location *
+                        </label>
+                        <input type="text" name="interview_location"
+                               class="form-control"
+                               placeholder="Office address or room number"
+                               value="{% if existing %}{{ existing.interview_location }}{% endif %}">
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-primary mb-3">
+                    <i class="fas fa-sticky-note me-2"></i>
+                    Additional Notes
+                </h6>
+                <div class="mb-4">
+                    <textarea name="additional_notes"
+                              class="form-control" rows="3"
+                              placeholder="Any specific instructions, documents to bring, topics to prepare...">{% if existing %}{{ existing.additional_notes }}{% endif %}</textarea>
+                </div>
+
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    An email notification with all interview details
+                    will be sent automatically to
+                    <strong>{{ candidate.email }}</strong>
+                    immediately after scheduling.
+                    {% if candidate.candidate_profile and candidate.candidate_profile.whatsapp_consent %}
+                    <br>
+                    <i class="fab fa-whatsapp me-1 mt-1"
+                       style="color:#25D366;"></i>
+                    A WhatsApp message option will also be provided.
+                    {% endif %}
+                </div>
+
+                <div class="d-flex gap-3">
+                    <button type="submit"
+                            class="btn btn-primary-custom px-5">
+                        <i class="fas fa-calendar-check me-2"></i>
+                        {% if existing %}Reschedule{% else %}Schedule{% endif %}
+                        Interview
+                    </button>
+                    <a href="{% url 'candidate_detail' candidate.id %}"
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Interview Preview Card -->
+    <div class="col-lg-4 d-none d-lg-block">
+        <div class="card-custom p-4">
+            <h6 class="fw-bold mb-3">
+                <i class="fas fa-eye me-2 text-primary"></i>
+                What Candidate Will Receive
+            </h6>
+            <div class="bg-light rounded p-3"
+                 style="font-size:0.8rem;line-height:1.8;">
+                <p class="fw-bold mb-1">
+                    📅 Interview Scheduled!
+                </p>
+                <p class="mb-1">
+                    Position: <strong>{{ candidate.job.title }}</strong>
+                </p>
+                <p class="mb-1">
+                    Company:
+                    <strong>{{ company.company_name }}</strong>
+                </p>
+                <p class="mb-1">Date: <em>[Selected Date]</em></p>
+                <p class="mb-1">Time: <em>[Selected Time]</em></p>
+                <p class="mb-1">Mode: <em>[Selected Mode]</em></p>
+                <p class="mb-1">
+                    HR: {{ company.hr_name }}
+                </p>
+                <hr>
+                <p class="text-muted mb-0"
+                   style="font-size:0.75rem;">
+                    This email will be sent from HireIQ platform
+                    to {{ candidate.email }}
+                </p>
+            </div>
+        </div>
+
+        {% if existing %}
+        <div class="card-custom p-4 mt-3">
+            <h6 class="fw-bold mb-3 text-warning">
+                <i class="fas fa-history me-2"></i>
+                Current Schedule
+            </h6>
+            <div class="mb-2">
+                <small class="text-muted">Date</small>
+                <div class="fw-semibold">
+                    {{ existing.interview_date|date:"M d, Y" }}
+                </div>
+            </div>
+            <div class="mb-2">
+                <small class="text-muted">Time</small>
+                <div class="fw-semibold">
+                    {{ existing.interview_time|time:"h:i A" }}
+                </div>
+            </div>
+            <div class="mb-2">
+                <small class="text-muted">Mode</small>
+                <div class="fw-semibold">
+                    {{ existing.get_interview_mode_display }}
+                </div>
+            </div>
+            <div>
+                <small class="text-muted">Status</small>
+                <div>
+                    <span class="badge bg-warning">
+                        {{ existing.get_status_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+function toggleModeFields() {
+    const online = document.getElementById('modeOnline').checked;
+    const offline = document.getElementById('modeOffline').checked;
+    const meetingField = document.getElementById('meetingLinkField');
+    const locationField = document.getElementById('locationField');
+
+    if (online) {
+        meetingField.style.display = 'block';
+        locationField.style.display = 'none';
+    } else if (offline) {
+        meetingField.style.display = 'none';
+        locationField.style.display = 'block';
+    } else {
+        meetingField.style.display = 'none';
+        locationField.style.display = 'none';
+    }
+}
+toggleModeFields();
+</script>
+{% endblock %}
+{% endblock %}

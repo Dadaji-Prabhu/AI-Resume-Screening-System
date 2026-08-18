@@ -1,0 +1,43 @@
+{% extends 'recruitment/base.html' %}
+{% block title %}Confirm Delete - HireIQ{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-5">
+        <div class="card-custom p-4 text-center">
+            <div style="font-size:4rem; color:#e74c3c;" class="mb-3">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h4 class="fw-bold mb-2">Confirm Delete</h4>
+            <p class="text-muted mb-1">You are about to delete this {{ object_type }}:</p>
+            <div class="alert alert-danger py-2 mb-4">
+                <strong>{{ object_name }}</strong>
+            </div>
+            <p class="text-muted small mb-4">
+                <i class="fas fa-info-circle me-1"></i>
+                This action cannot be undone. All related data will be
+                permanently deleted.
+            </p>
+            <div class="d-flex gap-3 justify-content-center">
+                <form method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger px-4">
+                        <i class="fas fa-trash me-2"></i>Yes, Delete
+                    </button>
+                </form>
+                {% if cancel_id %}
+                    <a href="{% url cancel_url cancel_id %}"
+                       class="btn btn-outline-secondary px-4">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                {% else %}
+                    <a href="{% url cancel_url %}"
+                       class="btn btn-outline-secondary px-4">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

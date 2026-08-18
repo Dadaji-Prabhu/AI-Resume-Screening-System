@@ -1,0 +1,259 @@
+{% extends 'recruitment/base.html' %}
+{% block title %}Interview Prep - HireIQ{% endblock %}
+
+{% block extra_css %}
+<style>
+.prep-card {
+    background: white;
+    border-radius: 14px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border-left: 4px solid #4361ee;
+}
+.prep-card.easy { border-left-color: #2ecc71; }
+.prep-card.medium { border-left-color: #f39c12; }
+.prep-card.hard { border-left-color: #e74c3c; }
+.answer-box {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 10px;
+    display: none;
+    border: 1px dashed #dee2e6;
+}
+.tip-box {
+    background: #e8f8f1;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #155724;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="fas fa-graduation-cap me-2"></i>
+                Interview Preparation
+            </h2>
+            <p class="mb-0 opacity-75">
+                Personalized questions for {{ job.title }}
+                at {{ job.company.company_name }}
+            </p>
+        </div>
+        <a href="{% url 'candidate_dashboard' %}"
+           class="btn btn-outline-light btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Job Info Banner -->
+<div class="card-custom p-3 mb-4"
+     style="background:linear-gradient(135deg,#1a1a2e,#0f3460);
+            color:white;">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h5 class="fw-bold mb-1">{{ job.title }}</h5>
+            <p class="mb-0 opacity-75 small">
+                <i class="fas fa-building me-1"></i>
+                {{ job.company.company_name }}
+                {% if job.location %}
+                · <i class="fas fa-map-marker-alt me-1"></i>
+                {{ job.location }}
+                {% endif %}
+            </p>
+        </div>
+        <div class="col-md-6 text-md-end mt-2 mt-md-0">
+            <span class="badge bg-success px-3 py-2 me-2">
+                <i class="fas fa-check me-1"></i>Applied
+            </span>
+            <small class="opacity-75">
+                {{ questions|length }} questions to practice
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Tracker -->
+<div class="card-custom p-3 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="fw-semibold small">
+            Practice Progress
+        </span>
+        <span class="text-muted small"
+              id="progressText">0 / {{ questions|length }}</span>
+    </div>
+    <div class="progress" style="height:8px;">
+        <div class="progress-bar bg-success"
+             id="progressBar" style="width:0%">
+        </div>
+    </div>
+</div>
+
+<!-- Questions -->
+<div class="row">
+    <div class="col-lg-8">
+        {% for q in questions %}
+        <div class="prep-card {{ q.difficulty|lower }}"
+             id="card-{{ forloop.counter }}">
+
+            <div class="d-flex justify-content-between mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size:1.1rem;">
+                        {{ q.icon }}
+                    </span>
+                    <span class="badge bg-light text-dark border"
+                          style="font-size:10px;">
+                        {{ q.category }}
+                    </span>
+                    <span class="badge"
+                          style="font-size:10px;
+                          {% if q.difficulty == 'Easy' %}background:#d4edda;color:#155724;
+                          {% elif q.difficulty == 'Medium' %}background:#fff3cd;color:#856404;
+                          {% else %}background:#f8d7da;color:#721c24;{% endif %}">
+                        {{ q.difficulty }}
+                    </span>
+                </div>
+                <button class="btn btn-sm btn-outline-success"
+                        onclick="markDone({{ forloop.counter }})"
+                        id="done-{{ forloop.counter }}"
+                        style="font-size:11px;padding:2px 8px;">
+                    <i class="fas fa-check me-1"></i>Done
+                </button>
+            </div>
+
+            <p class="fw-semibold mb-2"
+               style="font-size:0.95rem;line-height:1.5;">
+                Q{{ forloop.counter }}. {{ q.question }}
+            </p>
+
+            <div class="tip-box mb-2">
+                <i class="fas fa-lightbulb me-1"></i>
+                <strong>Tip:</strong> {{ q.tip }}
+            </div>
+
+            <button class="btn btn-sm btn-outline-secondary"
+                    onclick="toggleNotes({{ forloop.counter }})"
+                    style="font-size:11px;">
+                <i class="fas fa-sticky-note me-1"></i>
+                Add My Notes
+            </button>
+
+            <div class="answer-box"
+                 id="notes-{{ forloop.counter }}">
+                <textarea class="form-control"
+                          rows="3"
+                          style="font-size:12px;"
+                          placeholder="Write your practice answer here...">
+                </textarea>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card-custom p-4 mb-4"
+             style="position:sticky;top:20px;">
+            <h6 class="fw-bold mb-3">
+                <i class="fas fa-lightbulb me-2 text-warning"></i>
+                Interview Tips
+            </h6>
+            <ul class="list-unstyled"
+                style="font-size:12px;">
+                <li class="mb-2">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Use STAR method for behavioral questions
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Research {{ job.company.company_name }}
+                    before the interview
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Prepare 2-3 questions to ask the interviewer
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Practice your answers out loud
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Keep answers under 2 minutes each
+                </li>
+                <li class="mb-2">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Be specific — use real examples
+                </li>
+            </ul>
+
+            <hr>
+
+            <h6 class="fw-bold mb-2" style="font-size:13px;">
+                Your Strengths for This Role
+            </h6>
+            {% for skill in candidate.get_skills_list|slice:":6" %}
+                <span class="badge bg-success me-1 mb-1"
+                      style="font-size:10px;">
+                    {{ skill }}
+                </span>
+            {% endfor %}
+
+            <hr>
+
+            <a href="{% url 'candidate_job_detail' job.id %}"
+               class="btn btn-outline-primary w-100 btn-sm">
+                <i class="fas fa-briefcase me-2"></i>
+                View Job Details
+            </a>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+let doneCount = 0;
+const total = {{ questions|length }};
+
+function markDone(num) {
+    const card = document.getElementById('card-' + num);
+    const btn = document.getElementById('done-' + num);
+if (btn.classList.contains('btn-success')) {
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-outline-success');
+        btn.innerHTML = '<i class="fas fa-check me-1"></i>Done';
+        card.style.opacity = '1';
+        doneCount--;
+    } else {
+        btn.classList.remove('btn-outline-success');
+        btn.classList.add('btn-success');
+        btn.innerHTML = '<i class="fas fa-check me-1"></i>Done ✓';
+        card.style.opacity = '0.6';
+        doneCount++;
+    }
+
+    // Update progress
+    const pct = Math.round((doneCount / total) * 100);
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressText').textContent =
+        doneCount + ' / ' + total;
+}
+
+function toggleNotes(num) {
+    const box = document.getElementById('notes-' + num);
+    if (box.style.display === 'block') {
+        box.style.display = 'none';
+    } else {
+        box.style.display = 'block';
+    }
+}
+</script>
+{% endblock %}
+{% endblock %}

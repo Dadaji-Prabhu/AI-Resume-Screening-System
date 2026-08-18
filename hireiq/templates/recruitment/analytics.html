@@ -1,0 +1,155 @@
+{% extends 'recruitment/base.html' %}
+{% block title %}Analytics - HireIQ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="fw-bold mb-1"><i class="fas fa-chart-bar me-2"></i>Analytics Dashboard</h2>
+    <p class="mb-0 opacity-75">Insights across all job openings and candidates</p>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card-custom p-4 text-center">
+            <div style="font-size:2rem;color:#4361ee;"><i class="fas fa-users"></i></div>
+            <h3 class="fw-bold mt-2">{{ total_candidates }}</h3>
+            <p class="text-muted mb-0">Total Candidates</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card-custom p-4 text-center">
+            <div style="font-size:2rem;color:#2ecc71;"><i class="fas fa-check-circle"></i></div>
+            <h3 class="fw-bold mt-2">{{ total_shortlisted }}</h3>
+            <p class="text-muted mb-0">Shortlisted</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card-custom p-4 text-center">
+            <div style="font-size:2rem;color:#f39c12;"><i class="fas fa-star"></i></div>
+            <h3 class="fw-bold mt-2">{{ score_90|add:score_80 }}</h3>
+            <p class="text-muted mb-0">High Scorers (80%+)</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card-custom p-4 text-center">
+            <div style="font-size:2rem;color:#e74c3c;"><i class="fas fa-times-circle"></i></div>
+            <h3 class="fw-bold mt-2">{{ score_below }}</h3>
+            <p class="text-muted mb-0">Below 60%</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card-custom p-4">
+            <h5 class="fw-bold mb-4">
+                <i class="fas fa-chart-bar me-2 text-primary"></i>Score Distribution
+            </h5>
+            <canvas id="scoreChart" height="250"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card-custom p-4">
+            <h5 class="fw-bold mb-4">
+                <i class="fas fa-chart-pie me-2 text-primary"></i>Shortlist Ratio
+            </h5>
+            <canvas id="shortlistChart" height="250"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="card-custom p-4">
+    <h5 class="fw-bold mb-4">
+        <i class="fas fa-briefcase me-2 text-primary"></i>Job-wise Statistics
+    </h5>
+    {% if job_stats %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Job Title</th>
+                    <th>Total Resumes</th>
+                    <th>Avg Score</th>
+                    <th>Shortlisted</th>
+                    <th>Experience</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in job_stats %}
+                <tr>
+                    <td class="fw-semibold">{{ stat.job.title }}</td>
+                    <td>
+                        <span class="badge bg-primary rounded-pill">{{ stat.total_candidates }}</span>
+                    </td>
+                    <td>
+                        <span class="badge rounded-pill px-3 py-2
+                            {% if stat.avg_score >= 70 %}bg-success
+                            {% elif stat.avg_score >= 50 %}bg-warning
+                            {% else %}bg-danger{% endif %}">
+                            {{ stat.avg_score }}%
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-success rounded-pill">{{ stat.shortlisted }}</span>
+                    </td>
+                    <td>{{ stat.job.get_experience_required_display }}</td>
+                    <td>
+                        <a href="{% url 'job_detail' stat.job.id %}"
+                           class="btn btn-sm btn-primary-custom">
+                            <i class="fas fa-eye me-1"></i>View
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4">
+        <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+        <p class="text-muted">No data available yet. Upload some resumes first!</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const scoreCtx = document.getElementById('scoreChart').getContext('2d');
+new Chart(scoreCtx, {
+    type: 'bar',
+    data: {
+        labels: ['90-100%', '80-89%', '70-79%', '60-69%', 'Below 60%'],
+        datasets: [{
+            label: 'Candidates',
+            data: [{{ score_90 }}, {{ score_80 }}, {{ score_70 }}, {{ score_60 }}, {{ score_below }}],
+            backgroundColor: ['#2ecc71','#27ae60','#f39c12','#e67e22','#e74c3c'],
+            borderRadius: 8,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+});
+
+const shortCtx = document.getElementById('shortlistChart').getContext('2d');
+new Chart(shortCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Shortlisted', 'Pending', 'Below 60%'],
+        datasets: [{
+            data: [{{ total_shortlisted }}, {{ total_candidates }}, {{ score_below }}],
+            backgroundColor: ['#2ecc71', '#4361ee', '#e74c3c'],
+            borderWidth: 0,
+        }]
+    },
+    options: {
+        responsive: true,
+        cutout: '70%',
+        plugins: { legend: { position: 'bottom' } }
+    }
+});
+</script>
+{% endblock %}
