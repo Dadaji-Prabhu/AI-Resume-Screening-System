@@ -58,6 +58,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+EMAIL_TIMEOUT = 5
 DEFAULT_FROM_EMAIL = 'HireIQ <mayureshmprabhu27603@gmail.com>'
 
 
