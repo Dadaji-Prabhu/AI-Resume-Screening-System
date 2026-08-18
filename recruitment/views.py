@@ -191,7 +191,7 @@ Best regards,
 HireIQ Team
     '''
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL,
-              [user.email], fail_silently=False)
+              [user.email], fail_silently=True)
 
 
 def send_rejection_notification(candidate, company):
@@ -297,7 +297,7 @@ Best regards,
             message,
             settings.DEFAULT_FROM_EMAIL,
             [candidate.email],
-            fail_silently=False
+            fail_silently=True
         )
         print(f"Interview email sent to {candidate.email}")
 
